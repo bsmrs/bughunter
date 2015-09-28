@@ -1,0 +1,31 @@
+{
+	"name": "bughunter",
+	"version": "1.0-dev",
+	"require": {
+		"php": ">=5.4"
+	},
+	"authors": [
+		{
+			"name": "Sidney dos Santos Souza",
+			"email": "sidneysase@gmail.com"
+		}, {
+			"name": "Bruno de Souza Miranda",
+			"email": "brunodes.miranda@gmail.com"
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"Hunter\\": "src/"
+		}
+	},
+
+	"require": {
+		"doctrine/orm": "*"
+	},
+
+	"require-dev": {
+		"phpunit/phpunit": "4.6.*",
+		"squizlabs/php_codesniffer": "2.*",
+		"apigen/apigen": "4.1.*"
+	}
+}

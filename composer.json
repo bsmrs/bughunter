@@ -20,7 +20,8 @@
 	},
 
 	"require": {
-		"doctrine/orm": "*"
+		"doctrine/orm": "*",
+		"monolog/monolog": "*"
 	},
 
 	"require-dev": {

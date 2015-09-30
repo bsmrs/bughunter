@@ -4,19 +4,16 @@ namespace Hunter\Gearman;
 use Hunter\Gearman\Worker;
 use Monolog\Logger;
 
-class MyWorker extends Worker {
-	public function logIt($msg)
-	{
-		parent::logIt($msg);
-	}
-}
+/**
+ * Worker test class.
+ */
 
 class WorkerTest extends \PHPUnit_Framework_TestCase {
 	private $worker;
 
 	protected function setUp()
 	{
-		$this->worker = new MyWorker();
+		$this->worker = new Worker();
 	}
 
 	protected function tearDown()
@@ -34,6 +31,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Verify whether default worker instance is a instance of GearmanWorker.
 	 * @test
 	 */
 	public function getDefaultGearmanWorkerInstance()
@@ -42,6 +40,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try invalid workers.
 	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
@@ -52,6 +51,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set invalid Loggers.
 	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
@@ -62,6 +62,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set invalid IO timeout.
 	 * @test
 	 * @dataProvider        invalidNumbers
 	 * @expectedException   \InvalidArgumentException
@@ -72,6 +73,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set a valid IO timeout.
 	 * @test
 	 */
 	public function setValidIoTimeout()
@@ -80,6 +82,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Verify whether default Logger is null.
 	 * @test
 	 */
 	public function getDefaultLogger()
@@ -88,6 +91,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set a valid Logger.
 	 * @test
 	 */
 	public function setValidLogger()
@@ -101,6 +105,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set invalid job servers.
 	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
@@ -111,6 +116,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set a valid job server.
 	 * @test
 	 */
 	public function setValidJobServer()
@@ -119,6 +125,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Try set a empty job server.
 	 * @test
 	 * @expectedException \InvalidArgumentException
 	 */
@@ -128,6 +135,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @testdox Validate logIt bahavior.
 	 * @test
 	 */
 	public function logItBehavior()
@@ -145,6 +153,127 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
 
 		$this->worker->setLogger($logger);
 		$this->worker->logIt('testing...');
+	}
+
+	/**
+	 * @testdox Validate register method behavior.
+	 * @test
+	 */
+	public function registerMethodBehavior()
+	{
+		$gw = $this->getMockedWorker(['addFunction']);
+
+		$gw->expects($this->once())
+			->method('addFunction')->with(
+				$this->equalTo('test'),
+				$this->anything()
+			);
+
+		$this->worker->setWorker($gw);
+		$this->worker->registerMethods(["test" => "test"]);
+	}
+
+	/**
+	 * @testdox Validate register method behavior with two methods to register.
+	 * @test
+	 */
+	public function registerMethodBehaviorTwice()
+	{
+		$gw = $this->getMockedWorker(['addFunction']);
+
+		$gw->expects($this->exactly(2))
+			->method('addFunction')->withConsecutive(
+				$this->equalTo(['test', 'test2']),
+				$this->anything()
+			);
+
+		$this->worker->setWorker($gw);
+		$this->worker->registerMethods(
+			[
+				"test" => "test",
+				"test2" => "test2"
+			]
+		);
+	}
+
+	/**
+	 * @testdox Try start a worker without registered methods.
+	 * @test
+	 * @expectedException Hunter\Gearman\InvalidWorkerException
+	 */
+	public function tryStartWorkerWithoutRegisteredMethod()
+	{
+		$this->startWorkerReflection()
+			->invoke($this->worker);
+	}
+
+	/**
+	 * @testdox Try start a worker without a job server.
+	 * @test
+	 * @expectedException Hunter\Gearman\InvalidWorkerException
+	 */
+	public function tryStartWorkerWithoutJobServer()
+	{
+		$gw = $this->getMockedWorker(['addFunction']);
+
+		$gw->expects($this->once())
+			->method('addFunction')
+			->will($this->returnValue(true));
+
+		$this->worker->setWorker($gw);
+		$this->worker->registerMethods(['test' => 'test']);
+		$this->startWorkerReflection()
+			->invoke($this->worker);
+	}
+
+	/**
+	 * @testdox Try start a valid worker.
+	 * @test
+	 */
+	public function tryPreStartValidWorker()
+	{
+		$gw = $this->getMockedWorker(['addFunction', 'addServer']);
+
+		$gw->expects($this->once())
+			->method('addFunction')
+			->will($this->returnValue(true));
+
+		$gw->expects($this->once())
+			->method('addServer')
+			->with($this->equalTo('127.0.0.1'));
+
+		$this->worker->setWorker($gw);
+
+		$this->worker->registerMethods(['test' => 'test']);
+		$this->worker->setJobServers(['127.0.0.1']);
+		$this->startWorkerReflection()
+			->invoke($this->worker);
+	}
+
+	/**
+	 * @testdox Validate behavior trying register a invalid method.
+	 * @test
+	 * @expectedException InvalidArgumentException
+	 */
+	public function registerInvalidMethodBehavior()
+	{
+		$this->worker->registerMethods([]);
+	}
+
+	public function getMockedWorker(Array $methods)
+	{
+		return $this->getMockBuilder('\GearmanWorker')
+			->setMethods($methods)
+			->getMock();
+	}
+
+	public function startWorkerReflection()
+	{
+		$class = new \ReflectionClass('Hunter\Gearman\Worker');
+		$method = $class->getMethod('preStartWorker');
+		$method->setAccessible(true);
+
+		return $method;
 	}
 
 	public function invalidNumbers()

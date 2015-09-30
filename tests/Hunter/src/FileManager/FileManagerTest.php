@@ -1,6 +1,6 @@
 <?php
 
-namespace Hunter;
+namespace Hunter\FileManager;
 use Hunter\FileManager\FileManager;
 
 /**
@@ -12,6 +12,11 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	protected function setUp()
 	{
 		$this->file_manager = new FileManager();
+	}
+
+	protected function tearDown()
+	{
+		unset($this->file_manager);
 	}
 
 	/**

@@ -13,7 +13,7 @@ class InvalidWorkerException extends \Exception
 /**
  * A abstract class for a gearman worker.
  */
-abstract class Worker {
+class Worker {
 
 	/**
 	 * @var Object $logger is a instance of Logger.
@@ -29,22 +29,22 @@ abstract class Worker {
 	 * @var Array $registered_functions stores all methods that we need register
 	 * for a worker.
 	 */
-	private $registered_functions = array();
+	protected $registered_functions = [];
 
 	/**
 	 * @var Array $job_servers is a list with all job servers address.
 	 */
-	private $job_servers;
+	protected $job_servers = [];
 
 	/**
 	 * @var Object $worker is a instance of GearmanWorker class.
 	 */
-	private $worker;
+	protected $worker;
 
 	/**
 	 * @var Integer $io_timeout is the maximum time spent for a worker with IO.
 	 */
-	private $io_timeout = 10000; // in milliseconds
+	protected $io_timeout = 10000; // in milliseconds
 
 	public function __construct(\GearmanWorker $worker = null)
 	{
@@ -98,7 +98,7 @@ abstract class Worker {
 
 	/**
 	 * The setLogger can define a Logger that will be used to write messages.
-	 * @param Logger $logger
+	 * @param LoggerInterface $logger
 	 * @return $this;
 	 */
 	public function setLogger(Logger $logger)
@@ -110,7 +110,7 @@ abstract class Worker {
 
 	/**
 	 * This method returns an Logger object or null if a logger wasn't defined.
-	 * @return Object Logger
+	 * @return Logger Logger
 	 */
 	public function getLogger()
 	{
@@ -122,7 +122,7 @@ abstract class Worker {
 	 * @param String $msg A message to write.
 	 * @return $this;
 	 */
-	protected function logIt($msg)
+	public function logIt($msg)
 	{
 		if ( ! is_null($this->logger)) {
 			$this->logger->log(
@@ -130,7 +130,6 @@ abstract class Worker {
 				$msg
 			);
 		}
-
 		return $this;
 	}
 
@@ -143,7 +142,7 @@ abstract class Worker {
 	 * @throw InvalidArgumentException
 	 *     If the $method_names is empty.
 	 */
-	protected function registerMethods(Array $method_names)
+	public function registerMethods(Array $method_names)
 	{
 		if (empty($method_names)) {
 			throw new \InvalidArgumentException(
@@ -151,11 +150,26 @@ abstract class Worker {
 			);
 		}
 
-		$this->registered_functions = $functions;
+		$this->registered_functions = $method_names;
 
-		foreach ($functions as $key => $value) {
+		foreach ($method_names as $key => $value) {
 			$this->worker->addFunction($key, array($this, $value));
 			$this->logIt("Registering function: " . $key);
+		}
+	}
+
+	/**
+	 * The arrayIsEmpty check whether an array is empty and then launch an
+	 * InvalidWorkerException if it's.
+	 * @param Array $array
+	 * @param String $msg
+	 * @throw InvalidWorkerException
+	 */
+	private function arrayIsEmpty(Array $array, $msg)
+	{
+		if (empty($array)) {
+			$this->logIt($msg);
+			throw new InvalidWorkerException($msg);
 		}
 	}
 
@@ -170,34 +184,21 @@ abstract class Worker {
 	{
 		$this->logIt("Starting worker...");
 
-		if (empty($this->registered_functions)) {
-			$this->logIt(
-				"Trying start a worker without a registered function."
-			);
-			throw new \InvalidWorkerException(
-				"Trying start a worker without a registered function."
-			);
-		}
+		$this->arrayIsEmpty(
+			$this->registered_functions,
+			"Trying start a worker without a registered function."
+		);
 
 		$this->worker->setTimeout($this->io_timeout);
 
-		if (empty($this->job_servers)) {
-			$this->logIt(
-				"Trying start a worker without a job server."
-			);
-			throw new \InvalidWorkerException(
-				"Trying start a worker without a job server."
-			);
-		}
+		$this->arrayIsEmpty(
+			$this->job_servers,
+			"Trying start a worker without a job server."
+		);
 
 		foreach ($this->job_servers as $server) {
 			$this->worker->addServer($server);
-
-			$msg = sprintf(
-				"Adding server: %s",
-				$server
-			);
-
+			$msg = sprintf("Adding server: %s", $server);
 			$this->logIt($msg);
 		}
 
@@ -206,6 +207,7 @@ abstract class Worker {
 
 	/**
 	 * This method must be called to start the worker execution.
+	 * @codeCoverageIgnore
 	 */
 	public function run()
 	{

@@ -1,9 +1,9 @@
 {
-	"name": "bughunter",
-	"version": "1.0-dev",
-	"require": {
-		"php": ">=5.4"
-	},
+	"name": "bsmrs/bughunter",
+	"description": "A tool to execute CasperJS's tests in parallel",
+	"license": "LGPL-3.0+",
+	"minimum-stability": "stable",
+
 	"authors": [
 		{
 			"name": "Sidney dos Santos Souza",
@@ -13,6 +13,7 @@
 			"email": "brunodes.miranda@gmail.com"
 		}
 	],
+
 	"autoload": {
 		"psr-4": {
 			"Hunter\\": "src/"
@@ -20,8 +21,10 @@
 	},
 
 	"require": {
+		"php": ">=5.4",
 		"doctrine/orm": "*",
-		"monolog/monolog": "*"
+		"monolog/monolog": "*",
+		"respect/validation": "*"
 	},
 
 	"require-dev": {

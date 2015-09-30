@@ -1,17 +1,21 @@
 <?php
 
 namespace Hunter\FileManager;
-use Hunter\FileManager\FileManager;
+use Hunter\FileManager\FileManager as FM;
 
 /**
  * FileManager's test class
  */
 class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	private $file_manager;
+	private $junkFile;
+	private $immutableFile;
 
 	protected function setUp()
 	{
-		$this->file_manager = new FileManager();
+		$this->file_manager = new FM();
+		$this->junkFile = __DIR__ . DS . "junk_test_file";
+		$this->immutableFile = __DIR__ . DS . "junk_immutable_test_file";
 	}
 
 	protected function tearDown()
@@ -44,10 +48,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function tryCopyValidFile()
 	{
-		$this->file_manager->copyFile(
-			__FILE__,
-			__DIR__ . DS . "junk_test_file"
-		);
+		$this->file_manager->copyFile(__FILE__, $this->junkFile);
 	}
 
 	/**
@@ -57,23 +58,19 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function tryRemoveValidFile()
 	{
-		$this->file_manager->removeFile(
-			__DIR__ . DS . "junk_test_file"
-		);
+		$this->file_manager->removeFile($this->junkFile);
 	}
 
 	/**
 	 * @testdox Try remove a invalid file.
 	 * @depends tryRemoveValidFile
+	 * @expectedException \RuntimeException
 	 * @test
 	 */
 	public function tryRemoveInvalidFile()
 	{
-		$this->assertFalse(
-			$this->file_manager->removeFile(
-				__DIR__ . DS . "junk_test_file"
-			)
-		);
+		$bool = $this->file_manager->removeFile($this->junkFile);
+		$this->assertFalse($bool);
 	}
 
 	/**
@@ -83,9 +80,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function tryRemoveImmutableFile()
 	{
-		$this->file_manager->removeFile(
-			__DIR__ . DS . "junk_immutable_test_file"
-		);
+		$this->file_manager->removeFile($this->immutableFile);
 	}
 
 	/**
@@ -94,11 +89,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function readValidFile()
 	{
-		$this->assertEmpty(
-			$this->file_manager->getFileContent(
-				__DIR__ . DS . "junk_immutable_test_file"
-			)
-		);
+		$this->assertEmpty($this->file_manager->getFileContent($this->immutableFile));
 	}
 
 	/**
@@ -108,9 +99,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function readInvalidFile()
 	{
-		$this->file_manager->getFileContent(
-			"invalid_file"
-		);
+		$this->file_manager->getFileContent("invalid_file");
 	}
 
 	/**
@@ -130,7 +119,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function tryListInvalidTypeOfFile()
 	{
-		$this->file_manager->listDirFiles(__DIR__, null, 10);
+		$this->file_manager->listDirFiles(__DIR__, 10);
 	}
 
 	/**
@@ -139,12 +128,8 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function listFiles()
 	{
-		$files = $this->file_manager->listDirFiles(
-			__DIR__,
-			"^\w.*.php",
-			FileManager::TYPE_FILE
-		);
-
+		$anyPhpFile = "/^\w.*.php/";
+		$files = $this->file_manager->listDirFiles(__DIR__, FM::TYPE_FILE, $anyPhpFile);
 		$this->assertEquals(1, count($files));
 	}
 
@@ -154,12 +139,7 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function listDirectories()
 	{
-		$dir = $this->file_manager->listDirFiles(
-			__DIR__,
-			null,
-			FileManager::TYPE_DIR
-		);
-
+		$dir = $this->file_manager->listDirFiles(__DIR__, FM::TYPE_DIR);
 		$this->assertEquals(2, count($dir));
 	}
 
@@ -169,13 +149,32 @@ class FileManagerTest extends \PHPUnit_Framework_TestCase {
 	 */
 	public function listDirAndFiles()
 	{
-		$files = $this->file_manager->listDirFiles(
-			__DIR__,
-			"(^[.][.]?$|^\w.*)",
-			FileManager::TYPE_ALL
-		);
-
+		$getAllFilesThatIsNotHidden = "(^[.][.]?$|^\w.*)";
+		$files = $this->file_manager->listDirFiles(__DIR__, FM::TYPE_ALL, $getAllFilesThatIsNotHidden);
 		$this->assertEquals(4, count($files));
 	}
-}
 
+	/**
+	 * @testdox Verify whether an exception is launched when a directory could not be opened
+	 * @test
+	 * @expectedException \RuntimeException
+	 */
+	public function getHandlerError()
+	{
+		$class = new \ReflectionClass('Hunter\FileManager\FileManager');
+		$method = $class->getMethod('getHandler');
+		$method->setAccessible(true);
+		$method->invokeArgs($this->file_manager, ['/oi']);
+	}
+
+	/**
+	 * @testdox Does FileManager::listDirFiles() returns an empty array when an invalid pattern is passed?
+	 * @text
+	 */
+	public function invalidPatternToListDirFiles()
+	{
+		$files = $this->file_manager->listDirFiles(__DIR__, FM::TYPE_ALL, null);
+		$this->assertEmpty($files);
+	}
+
+}

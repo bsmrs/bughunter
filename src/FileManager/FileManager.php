@@ -5,22 +5,22 @@ namespace Hunter\FileManager;
 /**
  * This implements all generic methods to work with files.
  */
-class FileManager {
-
+class FileManager
+{
 	/**
 	 * @const TYPE_ALL is the code for accept all file types.
 	 */
-	const TYPE_ALL = 100;
+	const TYPE_ALL = null;
 
 	/**
 	 * @const TYPE_DIR is code for accept only directories.
 	 */
-	const TYPE_DIR = 101;
+	const TYPE_DIR = 'is_dir';
 
 	/**
 	 * @const TYPE_FILE is code for accept only files.
 	 */
-	const TYPE_FILE = 102;
+	const TYPE_FILE = 'is_file';
 
 	/**
 	 * This method creates a file's copy.
@@ -30,38 +30,25 @@ class FileManager {
 	 */
 	public function copyFile($src, $dst)
 	{
-		$ret = @copy($src, $dst);
-		if ( ! $ret) {
-			$msg = sprintf(
-				"Can't copy file '%s' to '%s'.",
-				$src,
-				$dst
+		if ( ! @copy($src, $dst)) {
+			throw new \RuntimeException(
+				sprintf("Can't copy file '%s' to '%s'.", $src, $dst)
 			);
-
-			throw new \RuntimeException($msg);
 		}
 	}
 
 	/**
 	 * This method remove a file from system.
 	 * @param String $filename a file with full path.
-	 * @throw RuntimeException if can't remove a file.
+	 * @throw RuntimeException If the file cannot be removed or it not exists..
 	 * @return Boolean
 	 */
 	public function removeFile($filename)
 	{
-		if ( ! file_exists($filename)) {
-			return false;
-		}
-
-		$ret = @unlink($filename);
-		if ( ! $ret) {
-			$msg = sprintf(
-				"Can't remove file '%s'.",
-				$filename
+		if (( ! file_exists($filename)) || ( ! @unlink($filename))) {
+			throw new \RuntimeException(
+				sprintf("Can't remove file '%s'.", $filename)
 			);
-
-			throw new \RuntimeException($msg);
 		}
 
 		return true;
@@ -71,14 +58,13 @@ class FileManager {
 	 * This method reads a file content.
 	 * @param String $filename a file with full path.
 	 * @return String $content file content.
-	 * @throw RuntimeException if can't read a file.
+	 * @throw RuntimeException if file cannot be read.
 	 */
 	public function getFileContent($filename)
 	{
-		$content = @file_get_contents($filename);
-		if ($content === false) {
+		if (false === ($content = @file_get_contents($filename))) {
 			throw new \RuntimeException(
-				"Unable to read '" . $filename . "'. Permissions?"
+				sprintf("Unable to read '%s'. Do you have permissions to do it?", $filename)
 			);
 		}
 
@@ -87,9 +73,9 @@ class FileManager {
 
 
 	/**
-	 * This method returns a file list of the a directory. Is possible inform a
-	 * regex to match with returned file list. The regex doesn't need "/" at
-	 * start and at end.
+	 * This method returns a file list of a directory. Is possible inform a
+	 * regex to match with returned file list. The regex must need "/" around pattern.
+	 *
 	 * @param String $dir a directory path.
 	 * @param $pattern a regex to match with returned file list.
 	 * @param $file_type can be TYPE_ALL, TYPE_DIR or TYPE_FILE.
@@ -97,82 +83,87 @@ class FileManager {
 	 * @throw RuntimeException
 	 *     - If $dir isn't a directory.
 	 *     - If Can't open the directory.
-	 * @throw InvalidArgumentException if $file_type is unknown.
+	 * @throw InvalidArgumentException if $type is unknown.
 	 */
-	public function listDirFiles($dir, $pattern = null, $file_type = self::TYPE_ALL)
+	public function listDirFiles($dir, $type = self::TYPE_ALL, $pattern = '//')
 	{
-		if ( ! is_dir($dir)) {
-			$msg = sprintf(
-				"The '%s' isn't a directory.",
-				$dir
-			);
 
-			throw new \RuntimeException($msg);
-		}
+		$this->validateDirectory($dir);
+		$this->validateType($type);
+		$test_fn = $type;
 
 		$files = array();
+		$handler = $this->getHandler($dir);
 
-		switch ($file_type) {
-			case self::TYPE_ALL:
-				$test_fn = null;
-				break;
-			case self::TYPE_DIR:
-				$test_fn = "is_dir";
-				break;
-			case self::TYPE_FILE:
-				$test_fn = "is_file";
-				break;
-			default:
-				$msg = sprintf(
-					"Unknown file type '%s'",
-					$file_type
-				);
-
-				throw new \InvalidArgumentException($msg);
-				break;
-		}
-
-		$handler = @opendir($dir);
-		if ( ! $handler) {
-			// @codeCoverageIgnoreStart
-			$msg = sprintf(
-				"Can't open dir '%s'. Permission?",
-				$dir
-			);
-
-			throw new \RuntimeException($msg);
-			// @codeCoverageIgnoreEnd
-		}
 
 		while (false !== ($file = readdir($handler))) {
-			if (($file_type !== self::TYPE_ALL) && ($test_fn($dir . DS . $file))) {
+			if ( ! @preg_match($pattern, $file)) {
+				continue;
+			}
+
+			if ($type !== self::TYPE_ALL && $test_fn($dir . DS . $file)) {
 				$files[] = $file;
-			} else if ($file_type === self::TYPE_ALL) {
+			} else if ($type === self::TYPE_ALL) {
 				$files[] = $file;
 			}
 		}
-
 		closedir($handler);
 
-		if (is_null($pattern)) {
-			return $files;
-		}
+		return $files;
+	}
 
-		$matched_files = array();
-		if ( ! preg_match("/^\/.*\/$/", $pattern)) {
-			$pattern = sprintf(
-				"/%s/",
-				$pattern
+	/**
+	 * If a type of file did not equals TYPE_ALL, TYPE_DIR, TYPE_FILE
+	 * an InvalidArgumentException is launched
+	 *
+	 * @param mixed $type Type of file that must be returned
+	 * @throw InvalidArgumentException
+	 */
+	private function validateType($type)
+	{
+		if (($type !== self::TYPE_ALL)
+			&& ($type !== self::TYPE_DIR)
+			&& ($type !== self::TYPE_FILE)) {
+			throw new \InvalidArgumentException(
+				sprintf("Unknown file type '%s'", $type)
 			);
 		}
+	}
 
-		foreach ($files as $file) {
-			if (preg_match($pattern, $file)) {
-				$matched_files[] = $file;
-			}
+	/**
+	 * If the path to directory is not a directory an RuntimeException is launched
+	 *
+	 * @param String $dir Path to directory where files will be searched
+	 * @throw RuntimeException
+	 */
+	private function validateDirectory($dir)
+	{
+		if ( ! is_dir($dir)) {
+			throw new \RuntimeException(
+				sprintf("The '%s' isn't a directory.", $dir)
+			);
 		}
+	}
 
-		return $matched_files;
+
+	/**
+	 * Get filesystem handler
+	 *
+	 * If the path cannot be opened a RuntimeException is launched
+	 *
+	 * @param String $dir Path to directory where files will be searched
+	 * @throw RuntimeException
+	 * @return Resource $handler Filesystem Handler
+	 */
+	private function getHandler($dir)
+	{
+		$handler = @opendir($dir);
+		if ( ! $handler) {
+			throw new \RuntimeException(
+				sprintf("Can't open dir '%s'. Permission?", $dir)
+			);
+		}
+		return $handler;
 	}
 }
 

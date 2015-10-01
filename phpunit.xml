@@ -1,5 +1,5 @@
 <phpunit
-	bootstrap="../../../bootstrap.php"
+	bootstrap="bootstrap.php"
 	colors="true"
 	convertErrorsToExceptions="true"
 	convertNoticesToExceptions="true"
@@ -11,7 +11,7 @@
 >
 	<testsuites>
 		<testsuite name="hunter">
-			<directory>/var/www/html/hunter/tests/Hunter/src/</directory>
+			<directory>tests/Hunter/</directory>
 		</testsuite>
 	</testsuites>
 	<logging>

@@ -1,6 +1,7 @@
 <?php
 
 namespace Tests\Hunter\Gearman;
+
 use Hunter\Gearman\Worker;
 use Monolog\Logger;
 
@@ -8,7 +9,9 @@ use Monolog\Logger;
  * Worker test class.
  */
 
-class WorkerTest extends \Tests\Hunter\AbstractTest {
+class WorkerTest extends \Tests\Hunter\AbstractTest
+{
+
 	private $worker;
 
 	protected function setUp()
@@ -23,7 +26,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Verify whether current tests are being executed on FileManager class.
-	 * @test
 	 */
 	public function isInstanceOfWorker()
 	{
@@ -32,7 +34,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Verify whether default worker instance is a instance of GearmanWorker.
-	 * @test
 	 */
 	public function getDefaultGearmanWorkerInstance()
 	{
@@ -41,7 +42,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try invalid workers.
-	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
@@ -52,7 +52,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set invalid Loggers.
-	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
@@ -63,7 +62,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set invalid IO timeout.
-	 * @test
 	 * @dataProvider        invalidNumbers
 	 * @expectedException   \InvalidArgumentException
 	 */
@@ -74,7 +72,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set a valid IO timeout.
-	 * @test
 	 */
 	public function setValidIoTimeout()
 	{
@@ -83,7 +80,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Verify whether default Logger is null.
-	 * @test
 	 */
 	public function getDefaultLogger()
 	{
@@ -92,7 +88,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set a valid Logger.
-	 * @test
 	 */
 	public function setValidLogger()
 	{
@@ -106,7 +101,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set invalid job servers.
-	 * @test
 	 * @dataProvider		invalidParameter
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
@@ -117,7 +111,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set a valid job server.
-	 * @test
 	 */
 	public function setValidJobServer()
 	{
@@ -126,7 +119,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set a empty job server.
-	 * @test
 	 * @expectedException \InvalidArgumentException
 	 */
 	public function setEmptyJobServer()
@@ -136,7 +128,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate logIt bahavior.
-	 * @test
 	 */
 	public function logItBehavior()
 	{
@@ -157,7 +148,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate register method behavior.
-	 * @test
 	 */
 	public function registerMethodBehavior()
 	{
@@ -175,7 +165,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate register method behavior with two methods to register.
-	 * @test
 	 */
 	public function registerMethodBehaviorTwice()
 	{
@@ -198,7 +187,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try start a worker without registered methods.
-	 * @test
 	 * @expectedException Hunter\Gearman\InvalidWorkerException
 	 */
 	public function tryStartWorkerWithoutRegisteredMethod()
@@ -209,7 +197,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try start a worker without a job server.
-	 * @test
 	 * @expectedException Hunter\Gearman\InvalidWorkerException
 	 */
 	public function tryStartWorkerWithoutJobServer()
@@ -228,7 +215,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try start a valid worker.
-	 * @test
 	 */
 	public function tryPreStartValidWorker()
 	{
@@ -252,7 +238,6 @@ class WorkerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate behavior trying register a invalid method.
-	 * @test
 	 * @expectedException InvalidArgumentException
 	 */
 	public function registerInvalidMethodBehavior()

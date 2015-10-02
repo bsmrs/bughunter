@@ -95,14 +95,79 @@ class ShellCommandRunner
 	}
 
 	/**
-	 * Close a processor
+	 * Close a process opened by proc_open() and return the exit code of that process
 	 *
 	 * @codeCoverageIgnore
 	 * @param Resource $stream
 	 */
-	protected function procClose($stream)
+	protected function procClose($handler)
 	{
-		return @proc_close($command_handle);
+		return @proc_close($handler);
+	}
+
+	/**
+	 * Set stream blocked
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 * @throw \RuntimeException
+	 */
+	protected function streamSetBlocking($stream)
+	{
+		if (is_resource($stream)) {
+			return stream_set_blocking($stream, 0);
+		}
+
+		throw new \RuntimeException(__FUNCTION__ . ": Resource is not valid");
+	}
+
+	/**
+	 * Select a stream
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 *
+	 */
+	protected function streamSelect(Array &$read, &$write = null, $except = null, $tv_sec = 0, $tv_usec = 1000)
+	{
+		return stream_select($read, $write, $except, $tv_sec, $tv_usec);
+	}
+
+	/**
+	 * Get a quantity of characters from stream
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 * @param Integer $size Quantity of characters
+	 * @return String String read from stream
+	 */
+	protected function fRead($stream, $size)
+	{
+		return fread($stream, $size);
+	}
+
+	/**
+	 * Tests for end-of-file on a file pointer
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 * @return Boolean
+	 */
+	protected function fEof($tream)
+	{
+		return feof($stream);
+	}
+
+	/**
+	 * Kills a process opened by proc_open
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 * @return Boolean
+	 */
+	protected function procTerminate($handler)
+	{
+		return proc_terminate($handler);
 	}
 
 	/**
@@ -124,45 +189,34 @@ class ShellCommandRunner
 		$pipes = array();
 		$command_handle = $this->procOpen($command, $pipes);
 
-		stream_set_blocking($pipes[1], 0);
-		stream_set_blocking($pipes[2], 0);
+		$this->streamSetBlocking($pipes[1]);
+		$this->streamSetBlocking($pipes[2]);
 
 		$timeout += time();
 
 		do {
 			$timeleft = $timeout - time();
 
-			stream_select(
-				$read = array($pipes[1]),
-				$write = null,
-				$exeptions = null,
-				0,
-				10000
-			);
+			$this->streamSelect($read = [$pipes[1]]);
 
 			if ( ! empty($pipes[1])) {
-				$this->stdout .= fread($pipes[1], 8192);
+				$this->stdout .= $this->fRead($pipes[1], 8192);
 			}
 
-			stream_select(
-				$read = array($pipes[2]),
-				$write = null,
-				$exeptions = null,
-				0,
-				10000
-			);
+			$this->streamSelect($read = [$pipes[2]]);
 
 			if ( ! empty($pipes[2])) {
-				$this->stderr .= fread($pipes[2], 8192);
+				$this->stderr .= $this->fRead($pipes[2], 8192);
 			}
-		} while (( ! feof($pipes[1])) && ( ! feof($pipes[2])) && ($timeleft >= 0));
+
+		} while (( ! $this->fEof($pipes[1])) && ( ! $this->fEof($pipes[2])) && ($timeleft >= 0));
 
 		if ($timeleft <= 0) {
-			proc_terminate($command_handle);
+			$this->procTerminate($command_handle);
 			throw new \RuntimeException("Command execution timeout on: " . $command);
 		}
 
-		$this->exit_code = proc_close($command_handle);
+		$this->exit_code = $this->procClose($command_handle);
 
 		return $this->exit_code;
 	}

@@ -11,9 +11,11 @@ class ShellCommandRunner
 	private $stdout = null;
 	private $stderr = null;
 	private $exit_code = null;
+	private $descriptors = [["pipe","r"], ["pipe","w"], ["pipe","w"]];
 
 	/**
 	 * Returns the command stdout.
+	 *
 	 * @return String
 	 */
 	public function getStdout()
@@ -23,6 +25,7 @@ class ShellCommandRunner
 
 	/**
 	 * Returns the command stderr.
+	 *
 	 * @return String
 	 */
 	public function getStderr()
@@ -31,45 +34,80 @@ class ShellCommandRunner
 	}
 
 	/**
+	 * Get the lastest exit code
+	 *
+	 * @return Integer
+	 */
+	public function getExitCode()
+	{
+		return $this->exit_code;
+	}
+
+	/**
 	 * Runs a shell command and returns the command exit code.
+	 *
 	 * @param String $command
 	 * @return Integer
 	 * @throw InvalidArgumentException if $command is null or empty
 	 */
 	public function run($command)
 	{
-
-		if ((is_null($command)) || (empty($command))) {
-			throw new \InvalidArgumentException("Can't execute a null command.");
-		}
-
-		$this->stdout = null;
-		$this->stderr = null;
-		$this->exit_code = null;
-		$this->command = $command;
-
-		$descriptors = array(
-			0 => array("pipe","r"),
-			1 => array("pipe","w"),
-			2 => array("pipe","w")
-		);
+		$this->validateCommand($command);
 
 		$pipes = array();
-		$command_handle = proc_open(
-			$command,
-			$descriptors,
-			$pipes
-		);
+		$command_handle = $this->procOpen($command, $pipes);
 
-		$this->stdout = stream_get_contents($pipes[1]);
-		$this->stderr = stream_get_contents($pipes[2]);
-		$this->exit_code = proc_close($command_handle);
+		$this->stdout = $this->streamGetContent($pipes[1]);
+		$this->stderr = $this->streamGetContent($pipes[2]);
+		$this->exit_code = $this->procClose($command_handle);
 
 		return $this->exit_code;
 	}
 
 	/**
+	 * Open a processor
+	 *
+	 * @codeCoverageIgnore
+	 * @param String $command
+	 * @param Array $pipes Empty Array
+	 * @return Resource
+	 */
+	protected function procOpen($command, &$pipes)
+	{
+		return proc_open($command, $this->descriptors, $pipes);
+	}
+
+	/**
+	 * Get content from resource
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 * @return String
+	 * @throw \RuntimeException
+	 */
+	protected function streamGetContent($stream)
+	{
+		if (is_resource($stream)) {
+			return stream_get_contents($stream);
+		}
+
+		throw new \RuntimeException(__FUNCTION__ . ": Resource is not valid");
+	}
+
+	/**
+	 * Close a processor
+	 *
+	 * @codeCoverageIgnore
+	 * @param Resource $stream
+	 */
+	protected function procClose($stream)
+	{
+		return @proc_close($command_handle);
+	}
+
+	/**
 	 * Runs a shell command waiting until a timeout and returns the command exit code or throw a RuntimeException.
+	 *
 	 * @param String $command
 	 * @param Integer $timeout in seconds
 	 * @return Integer
@@ -80,32 +118,11 @@ class ShellCommandRunner
 	 */
 	public function runWithTimeout($command, $timeout = 5)
 	{
-
-		if ((is_null($command)) || (empty($command))) {
-			throw new \InvalidArgumentException("Can't execute a null command.");
-		}
-
-		if ( ! is_numeric($timeout)) {
-			throw new \InvalidArgumentException("Timeout parameter must be numeric.");
-		}
-
-		$this->stdout = null;
-		$this->stderr = null;
-		$this->exit_code = null;
-
-		$descriptors = array(
-			0 => array("pipe","r"),
-			1 => array("pipe","w"),
-			2 => array("pipe","w")
-		);
+		$this->validateCommand($command);
+		$this->validateTimeout($timeout);
 
 		$pipes = array();
-
-		$command_handle = proc_open(
-			$command,
-			$descriptors,
-			$pipes
-		);
+		$command_handle = $this->procOpen($command, $pipes);
 
 		stream_set_blocking($pipes[1], 0);
 		stream_set_blocking($pipes[2], 0);
@@ -150,8 +167,17 @@ class ShellCommandRunner
 		return $this->exit_code;
 	}
 
-	public function getExitCode()
+	private function validateCommand($command)
 	{
-		return $this->exit_code;
+		if ((is_null($command)) || (empty($command))) {
+			throw new \InvalidArgumentException("Can't execute a null command.");
+		}
+	}
+
+	private function validateTimeout($timeout)
+	{
+		if ((! is_int($timeout)) || ($timeout <= 0)) {
+			throw new \InvalidArgumentException("Timeout parameter must be numeric.");
+		}
 	}
 }

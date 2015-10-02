@@ -35,6 +35,7 @@ class TaskManager {
 
 	/**
 	 * This method returns a copy of the local of GearmanClient instance.
+	 *
 	 * @return GearmanClient
 	 */
 	public function getClient()
@@ -45,6 +46,7 @@ class TaskManager {
 	/**
 	 * The setClient method is used to overwrite original instance of the
 	 * GearmanClient.
+	 *
 	 * @param GearmanClient $client
 	 * @return $this
 	 */
@@ -57,6 +59,7 @@ class TaskManager {
 	/**
 	 * This method send a task for a gearman queue with some priority and wait
 	 * the result. The priority can by NORMAL (default), HIGH or VERY HIGH.
+	 *
 	 * @param String $queue
 	 *     Is the queue's name that will used to sent a task.
 	 * @param Mixed $data
@@ -98,6 +101,7 @@ class TaskManager {
 	/**
 	 * This method send a task for a gearman queue runs in background with some
 	 * priority. The priority can by NORMAL (default), HIGH or VERY HIGH.
+	 *
 	 * @param String $queue
 	 *     Is the queue's name that will used to sent a task.
 	 * @param Mixed $data
@@ -124,13 +128,13 @@ class TaskManager {
 				$handler = $this->client->doHighBackground($queue, $data);
 				break;
 			default:
-				throw new InvalidArgumentException(
+				throw new \InvalidArgumentException(
 					"Unknown run priority: " . $priority
 				);
 		}
 
 		if ($this->client->returnCode() != GEARMAN_SUCCESS) {
-			throw new RuntimeException("Can't submit job to queue: " . $queue);
+			throw new \RuntimeException("Can't submit job to queue: " . $queue);
 		}
 
 		return $handler;
@@ -139,47 +143,93 @@ class TaskManager {
 	/**
 	 * The getQueueStatus method returns the gearman's queue status, with the
 	 * queue name, available workers, jobs waiting and running.
+	 *
 	 * @return Array
 	 */
 	public function getQueueStatus()
 	{
-		$data = array();
+		$data = [];
+		$sock = $this->openSocket();
+		$this->sendCommand($sock, 'status');
 
-		$cfg = new ConfigManager();
-		$job_servers = $cfg->getJobServers();
+		do {
+			$content = $this->getStreamContent($sock);
 
-		foreach ($job_servers as $server) {
-			$sock = @fsockopen($server, 4730, $err, $errstr, 3);
-
-			if ( ! $sock) {
-				continue;
+			if (preg_match("/^\./", $content)) {
+				break;
 			}
 
-			stream_set_timeout($sock, 2);
-			fprintf($sock, "status\n");
-			do {
-				$aux = trim(fgets($sock));
-				if ($aux == '.') {
-					continue;
-				}
+			@list($name, $waiting, $running, $available_workers)
+				= explode("\t", $content);
+			$data[] = [
+				"queue" => $name,
+				"jobs_waiting" => $waiting,
+				"jobs_running" => $running,
+				"available_workers" => $available_workers
+			];
+		} while (true);
 
-				@list($name, $waiting, $running, $registered) = explode("\t", $aux);
-				$data[] = array(
-					"queue" => $name,
-					"workers" => $registered,
-					"waiting" => $waiting,
-					"running" => $running
-				);
-			} while ( ! preg_match("/^\./", $aux));
-
-			fclose($sock);
-		}
+		@fclose($sock);
 
 		return $data;
 	}
 
 	/**
+	 * The sendCommand is used to send commands into a resource.
+	 *
+	 * @param Resource $stream
+	 * @aparam String $command to send.
+	 * @throw RuntimeException whether $stream isn't a resource.
+	 * @codeCoverageIgnore
+	 */
+	protected function sendCommand($stream, $command)
+	{
+		if (is_resource($stream)) {
+			fprintf($stream, $command . "\n");
+			return;
+		}
+
+		throw new \RuntimeException(__FUNCTION__ . ": Resource is invalid.");
+	}
+
+	/**
+	 * This method reads from stream resource (socket).
+	 *
+	 * @param Resource
+	 * @return String
+	 * @codeCoverageIgnore
+	 */
+	protected function getStreamContent($stream)
+	{
+		return (is_resource($stream)) ? trim(fgets($stream)) : "";
+	}
+
+	/**
+	 * The openSocket method open a socket with Gearman on localhost.
+	 *
+	 * @return Resource
+	 * @throw RuntimeException Whether can't connect on Gearman.
+	 * @codeCoverageIgnore
+	 */
+	protected function openSocket()
+	{
+		$sock = @fsockopen('127.0.0.1', 4730, $err, $errstr, 3);
+		if ( ! $sock) {
+			// @codeCoverageIgnoreStart
+			throw new \RuntimeException(
+				"Can't connect on Gearman using localhost:4730."
+			);
+			// @codeCoverageIgnoreEnd
+		}
+
+		stream_set_timeout($sock, 2);
+
+		return $sock;
+	}
+
+	/**
 	 * Get the status of a background job.
+	 *
 	 * @param String $job_handler
 	 *    Is the same returned by run and runBackground methods.
 	 * @return Array
@@ -191,6 +241,7 @@ class TaskManager {
 	 *    fractional completion percentage, respectively.
 	 * @see TaskManager::run()
 	 * @see TaskManager::runBackground()
+	 * @codeCoverageIgnore
 	 */
 	public function getJobStatus($job_handler)
 	{
@@ -199,6 +250,7 @@ class TaskManager {
 
 	/**
 	 * Verify whether a job is running or not.
+	 *
 	 * @param String $job_handler
 	 *     Is the same returned by run and runBackground methods.
 	 * @return Boolean

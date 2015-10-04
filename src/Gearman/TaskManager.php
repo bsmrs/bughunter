@@ -48,7 +48,7 @@ class TaskManager {
 	 * GearmanClient.
 	 *
 	 * @param GearmanClient $client
-	 * @return $this
+	 * @return TaskManager
 	 */
 	public function setClient(\GearmanClient $client)
 	{

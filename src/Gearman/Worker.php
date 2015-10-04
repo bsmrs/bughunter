@@ -56,7 +56,7 @@ class Worker {
 	 * The setWorker method is used to overwrite original instance of the
 	 * GearmanWorker.
 	 * @param GearmanWorker $worker
-	 * @return $this
+	 * @return Worker
 	 */
 	public function setWorker(\GearmanWorker $worker)
 	{
@@ -81,7 +81,7 @@ class Worker {
 	 *     Is the maximum time spent for a worker with IO in milliseconds.
 	 * @throw InvalidArgumentException
 	 *     If the timeout isn't numeric.
-	 * @return $this
+	 * @return Worker
 	 */
 	public function setIoTimeout($timeout)
 	{
@@ -99,7 +99,7 @@ class Worker {
 	/**
 	 * The setLogger can define a Logger that will be used to write messages.
 	 * @param LoggerInterface $logger
-	 * @return $this;
+	 * @return Worker
 	 */
 	public function setLogger(Logger $logger)
 	{
@@ -120,7 +120,7 @@ class Worker {
 	/**
 	 * This method writes messages in a log file.
 	 * @param String $msg A message to write.
-	 * @return $this;
+	 * @return Worker
 	 */
 	public function logIt($msg)
 	{
@@ -235,7 +235,7 @@ class Worker {
 	 *     Is a list of the job servers address where this worker need runs.
 	 * @throw InvalidArgumentException
 	 *     If the list of the servers address is empty.
-	 * @return $this
+	 * @return Worker
 	 */
 	public function setJobServers(Array $servers = array())
 	{

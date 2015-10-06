@@ -1,0 +1,14 @@
+--- Sistem configuration database.
+CREATE DATABASE IF NOT EXISTS `config`;
+
+use `config`;
+
+CREATE TABLE IF NOT EXISTS `gearman_workers` (
+	`id` INT UNSIGNED NOT NULL auto_increment,
+	`name` TINYTEXT NOT NULL,
+	`min` SMALLINT UNSIGNED DEFAULT 1 NOT NULL,
+	`max` SMALLINT UNSIGNED DEFAULT 1 NOT NULL,
+	`increment` SMALLINT UNSIGNED DEFAULT 1 NOT NULL,
+	PRIMARY KEY  (`id`)
+) DEFAULT CHARSET=utf8;
+

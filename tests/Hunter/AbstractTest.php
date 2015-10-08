@@ -22,7 +22,7 @@ abstract class AbstractTest extends TestCase
 		return $m->getMock();
 	}
 
-	public function invalidParameter()
+	public function invalidString()
 	{
 		return [
 			[null],
@@ -42,9 +42,7 @@ abstract class AbstractTest extends TestCase
 			[""],
 			["1"],
 			["a"],
-			[null],
-			[-1],
-			[0]
+			[null]
 		];
 	}
 

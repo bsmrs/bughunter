@@ -63,6 +63,7 @@ class WorkerCfg {
 	{
 		Validator::alnum('_')
 			->noWhitespace()
+			->notEmpty()
 			->length(1, 255)
 			->check($name);
 
@@ -85,9 +86,14 @@ class WorkerCfg {
 	 */
 	public function setMin($min)
 	{
+		/*
+		if ( ! is_int($min)) {
+			throw new \InvalidArgumentException("must");
+		}
+		 */
 		Validator::type('int')
 			->int()
-			->between(1, 65535, true)
+			->between(0, 65535, true)
 			->check($min);
 
 		$this->min = $min;

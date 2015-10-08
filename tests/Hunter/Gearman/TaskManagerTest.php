@@ -22,7 +22,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Verify whether current tests are being executed on TaskManager class.
-	 * @test
 	 */
 	public function isInstanceOfTaskManager()
 	{
@@ -40,8 +39,7 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set invalid Gearman client.
-	 * @test
-	 * @dataProvider		invalidParameter
+	 * @dataProvider		invalidString
 	 * @expectedException	\PHPUnit_Framework_Error
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
@@ -52,7 +50,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try set a valid Gearman client.
-	 * @test
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
 	public function trySetValidClient()
@@ -63,7 +60,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate run job behavior with normal priority and success on submit job.
-	 * @test
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
 	public function runNormalSuccessBehavior()
@@ -84,7 +80,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate run job behavior with normal priority and failure on submit job.
-	 * @test
 	 * @expectedException RuntimeException
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
@@ -106,7 +101,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate run job behavior with high priority and success on submit job.
-	 * @test
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
 	public function runHighSuccessBehavior()
@@ -131,7 +125,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Validate run job behavior with very high priority and success on submit job.
-	 * @test
 	 * @depends getDefaultTaskManagerClientInstance
 	 */
 	public function runVeryHighSuccessBehavior()
@@ -152,7 +145,6 @@ class TaskManagerTest extends \Tests\Hunter\AbstractTest {
 
 	/**
 	 * @testdox Try send a job with a invalid priority.
-	 * @test
 	 * @expectedException InvalidArgumentException
 	 * @depends getDefaultTaskManagerClientInstance
 	 */

@@ -25,7 +25,7 @@ class WorkerTest extends \Tests\Hunter\AbstractTest
 	}
 
 	/**
-	 * @testdox Verify whether current tests are being executed on FileManager class.
+	 * @testdox Verify whether current tests are being executed on Worker class.
 	 */
 	public function isInstanceOfWorker()
 	{
@@ -42,7 +42,7 @@ class WorkerTest extends \Tests\Hunter\AbstractTest
 
 	/**
 	 * @testdox Try invalid workers.
-	 * @dataProvider		invalidParameter
+	 * @dataProvider		invalidString
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
 	public function setWorkerInvalidParameter($data)
@@ -52,7 +52,7 @@ class WorkerTest extends \Tests\Hunter\AbstractTest
 
 	/**
 	 * @testdox Try set invalid Loggers.
-	 * @dataProvider		invalidParameter
+	 * @dataProvider		invalidString
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
 	public function setLoggerInvalidParameter($data)
@@ -101,7 +101,7 @@ class WorkerTest extends \Tests\Hunter\AbstractTest
 
 	/**
 	 * @testdox Try set invalid job servers.
-	 * @dataProvider		invalidParameter
+	 * @dataProvider		invalidString
 	 * @expectedException	\PHPUnit_Framework_Error
 	 */
 	public function setInvalidJobServers($data)

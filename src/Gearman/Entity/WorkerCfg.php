@@ -86,13 +86,7 @@ class WorkerCfg {
 	 */
 	public function setMin($min)
 	{
-		/*
-		if ( ! is_int($min)) {
-			throw new \InvalidArgumentException("must");
-		}
-		 */
 		Validator::type('int')
-			->int()
 			->between(0, 65535, true)
 			->check($min);
 
@@ -116,7 +110,6 @@ class WorkerCfg {
 	public function setMax($max)
 	{
 		Validator::type('int')
-			->int()
 			->between(1, 65535, true)
 			->check($max);
 
@@ -140,7 +133,6 @@ class WorkerCfg {
 	public function setIncrement($increment)
 	{
 		Validator::type('int')
-			->int()
 			->between(1, 65535, true)
 			->check($increment);
 
